@@ -81,29 +81,31 @@ class PostCommit:
     
     def gus(self, commit):
         try:
-            scheduled_build = commit.annotations['scheduled_build']
-            work_name = commit.annotations['fixes']
+            scheduled_build = commit['annotations']['scheduled_build']
+            work_name = commit['annotations']['fixes']
             gus = BacklogClient()
             buildid = gus.find_build_id(scheduled_build)
             work = gus.find_work(work_name)
             gus.mark_work_fixed(work["Id"], buildid)
-            gus.add_changelist_comment(work["Id"], commit.overview, commit.changelist)
+            gus.add_changelist_comment(work["Id"], "%s\n\n%s" % (commit['title'], commit['overview']), commit['changelist'])
             print 'Updated Work Item %s (%s) status to Fixed in build %s' % (work_name, work['Id'], scheduled_build)
-        except:
+        except Exception as e:
             print 'Seems to be missing Gus ID/Build or unable to reach Gus. Not updating Gus'
+            print e
     
     def collab(self, commit):
         try:
-            reviewers = commit.annotations['reviewers']
+            reviewers = commit['annotations']['reviewers']
             cc = CodeCollabClient()
-            review_id = cc.create_collab(commit.title, commit.message)
-            cc.add_diffs(review_id, commit.diff)
+            review_id = cc.create_collab(commit['title'], commit['overview'])
+            cc.add_diffs(review_id, commit['unified_diff'])
             author = cc.get_current_user()
             cc.add_reviewers(review_id, author, reviewers)
             cc.done(review_id)
             print 'Created code review %s for author %s' % (review_id, author)
-        except:
+        except Exception as e:
             print 'No reviewer specified for commit, can\'t create review'
+            print e
         
     def commit(self):
         commit = self.buildCommit()
