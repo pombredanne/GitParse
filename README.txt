@@ -4,7 +4,7 @@ This module graps the git log from your last commit and uses it to:
 	2. Create a code review
 	
 To use this, create the following post_commit in your .git/hooks directory
-of your repository
+of your repository and make executable
 
 	#!/usr/bin/env python
 	
