@@ -10,10 +10,10 @@ of your repository and make executable
 
 	#!/usr/bin/env python
 	
-	from git.Git import PostCommit
+	import git.Git
 	
 	def main():
-		pc = PostCommit()
+		pc = Git.PostCommit()
 		pc.commit()
 		
 	if '__name__' == '__main__':
