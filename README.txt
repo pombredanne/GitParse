@@ -10,15 +10,11 @@ of your repository and make executable
 
 	#!/usr/bin/env python
 	
-	import git.Git
+	from git.Git import PostCommit
 	
-	def main():
-		pc = Git.PostCommit()
-		pc.commit()
+	pc = Git.PostCommit()
+	pc.commit()
 		
-	if '__name__' == '__main__':
-		main() 
-	
 
 It provides a module that parses the last commit log and gives you
 
