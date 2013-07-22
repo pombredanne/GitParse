@@ -12,7 +12,7 @@ of your repository and make executable
 	
 	from git.Git import PostCommit
 	
-	pc = Git.PostCommit()
+	pc = PostCommit()
 	pc.commit()
 		
 
