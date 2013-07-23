@@ -1,5 +1,6 @@
 Post Commit hook utility
 ========================
+
 This module graps the git log from your last commit and uses it to:
 
 	1. Update GUS items
