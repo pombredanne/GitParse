@@ -14,6 +14,15 @@ of your repository and make executable
 	
 	pc = PostCommit()
 	pc.commit()
+	
+You can also utilize a the webservice to do the updates asynchronously
+
+	#!/usr/bin/env python
+	
+	from git.Git import PostCommit
+	
+	pc = PostCommit()
+	pc.remote()
 		
 
 It provides a module that parses the last commit log and gives you

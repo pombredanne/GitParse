@@ -1,4 +1,4 @@
-import subprocess, re
+import subprocess, re, httplib, json
 from gus.BacklogClient import BacklogClient
 from collab.CodeCollab import CodeCollabClient
 
@@ -61,7 +61,10 @@ class Patch:
         return diffout
     
 class PostCommit:
-    def buildCommit(self): 
+    def buildCommit(self):
+        '''
+        Parses the last git commit log entry and creates a data structure with the relevant parts 
+        ''' 
         author = Author()
         comment = Comment()
         changes = Changes()
@@ -80,6 +83,10 @@ class PostCommit:
         return commit
     
     def gus(self, commit):
+        '''
+        Updates the gus item to fixed as long as there is a 'fixes' and 'scheduled_build'
+        annotation in the commit message
+        '''
         try:
             scheduled_build = commit['annotations']['scheduled_build']
             work_name = commit['annotations']['fixes']
@@ -93,13 +100,18 @@ class PostCommit:
             print 'Seems to be missing Gus ID/Build or unable to reach Gus. Not updating Gus'
             print e
     
-    def collab(self, commit):
+    def collab(self, commit, author=None):
+        '''
+        Creates a code review in code collaborator from the git logs if there is
+        a 'reviewers' annotation in the commit message
+        '''
         try:
             reviewers = commit['annotations']['reviewers']
             cc = CodeCollabClient()
             review_id = cc.create_collab(commit['title'], commit['overview'])
             cc.add_diffs(review_id, commit['unified_diff'])
-            author = cc.get_current_user()
+            if author is None:
+                author = cc.get_current_user()
             cc.add_reviewers(review_id, author, reviewers)
             cc.done(review_id)
             print 'Created code review %s for author %s' % (review_id, author)
@@ -108,7 +120,40 @@ class PostCommit:
             print e
         
     def commit(self):
+        '''
+        Builds the commit from the git logs and performs gus and code collab
+        tasks directly.  Use remote if you want to post the commit to an
+        async service which in turn, calls this method.
+        '''
         commit = self.buildCommit()
         self.gus(commit)
         self.collab(commit)
+        
+    def remote(self, server='localhost:8000'):
+        ''' 
+        Establishes identities for GUS and Code collab for proxy ticket update
+        and code review creation.  Code collab client cannot activate review for
+        remote.
+        '''
+        gus = BacklogClient()
+        session_id = gus.session_id()
+        cc = CodeCollabClient()
+        author = cc.get_current_user()
+        commit = self.buildCommit()
+        commit['gus_session'] = session_id
+        commit['collab_user'] = author
+        
+        with httplib.HTTPConnection(server) as conn:
+            head = {
+                'Content-Type' : 'application/json',
+                'Accept'       : 'application/json'
+            }
+            conn.request('POST','/service/post', json.dumps(commit), head)
+            response = conn.getresponse()
+            print response.status, response.reason
+            data = response.read()
+            conn.close()
+            
+            print data
+
         
