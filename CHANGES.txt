@@ -6,3 +6,4 @@ v0.1.4, 22 July 2013 --
 v0.1.5, 22 July 2013 -- Fixed various packaging issues
 v0.1.6, 22 July 2013 -- Fixed bug with annotations
 v0.1.7, 22 July 2013 -- Added remote method to PostCommit
+v0.1.10, 23 July 2013 -- Fixed remote method and cleaned up output

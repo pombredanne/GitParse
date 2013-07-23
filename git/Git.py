@@ -6,8 +6,8 @@ class Author:
     a_name = ''
     a_email = ''
 
-    def __init__(self):
-        author = subprocess.check_output(['git','log','-1','--pretty=format:%cn,%ce'])
+    def __init__(self, commitid='-1'):
+        author = subprocess.check_output(['git','log',commitid,'--pretty=format:%cn,%ce'])
         self.a_name, self.a_email = author.split(",")
 
     def name(self):
@@ -20,9 +20,13 @@ class Comment:
     title = ''
     overview = ''
 
-    def __init__(self):
-        out = subprocess.check_output(['git', 'log', '-1', '--pretty=format:%B'])
-        out = out.replace('"', '')
+    def __init__(self, comment=None, commitid='-1'):
+        if comment is None:
+            out = subprocess.check_output(['git', 'log', commitid, '--pretty=format:%B'])
+            out = out.replace('"', '')
+        else:
+            out = comment
+            
         commit_array = out.split("\n")
         self.title, self.overview = commit_array[0], "\n".join(commit_array[1:])
 
@@ -44,8 +48,8 @@ class Comment:
         return out
 
 class Changes:
-    def list(self):
-        changelist = subprocess.check_output(['git', 'log', '-1', '--name-status', '--pretty=format:%cd'])
+    def list(self, commitid='-1'):
+        changelist = subprocess.check_output(['git', 'log', commitid, '--name-status', '--pretty=format:%cd'])
         changelist = changelist.replace('\t',': ')
         changes = changelist.split("\n")
         # removes the first line of the output so that all left is the changelist
@@ -53,8 +57,8 @@ class Changes:
         return changeout
 
 class Patch:
-    def diff(self):
-        diff = subprocess.check_output(['git','log','-1','--unified=100000','--pretty=format:%cd'])
+    def diff(self, commitid='-1'):
+        diff = subprocess.check_output(['git','log',commitid,'--unified=100000','--pretty=format:%cd'])
         diff_array = diff.split("\n")
         # removes the first line of the output so all that is left is the diff
         diffout = "\n".join(diff_array[1:])
@@ -143,17 +147,16 @@ class PostCommit:
         commit['gus_session'] = session_id
         commit['collab_user'] = author
         
-        with httplib.HTTPConnection(server) as conn:
-            head = {
-                'Content-Type' : 'application/json',
-                'Accept'       : 'application/json'
-            }
-            conn.request('POST','/service/post', json.dumps(commit), head)
-            response = conn.getresponse()
-            print response.status, response.reason
-            data = response.read()
-            conn.close()
-            
-            print data
+        conn = httplib.HTTPConnection(server)
+        head = {
+            'Content-Type' : 'application/json',
+            'Accept'       : 'application/json'
+        }
+        conn.request('POST','/service/post', json.dumps(commit), head)
+        response = conn.getresponse()
+        data = response.read()
+        conn.close()
+        
+        print data
 
         
