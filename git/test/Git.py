@@ -10,7 +10,8 @@ class Test(unittest.TestCase):
         
     def test_rehydrated_session(self):
         commit = {
-               'annotations' : {'gus_session':'something', 'scheduled_build':'something', 'fixes':'something'}
+               'annotations' : {'scheduled_build':'something', 'fixes':'something'},
+               'gus_session':'something',
                }
         pc = PostCommit()
         pc.gus(commit)

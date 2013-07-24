@@ -94,8 +94,8 @@ class PostCommit:
         try:
             scheduled_build = commit['annotations']['scheduled_build']
             work_name = commit['annotations']['fixes']
-            if 'gus_session' in commit['annotations']:
-                gus = BacklogClient(session_id=commit['annotations']['gus_session'])
+            if 'gus_session' in commit:
+                gus = BacklogClient(session_id=commit['gus_session'])
             else:
                 gus = BacklogClient()
             buildid = gus.find_build_id(scheduled_build)
