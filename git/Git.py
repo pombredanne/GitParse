@@ -90,11 +90,14 @@ class PostCommit:
         '''
         Updates the gus item to fixed as long as there is a 'fixes' and 'scheduled_build'
         annotation in the commit message
-        '''
+        '''        
         try:
             scheduled_build = commit['annotations']['scheduled_build']
             work_name = commit['annotations']['fixes']
-            gus = BacklogClient()
+            if 'gus_session' in commit['annotations']:
+                gus = BacklogClient(session_id=commit['annotations']['gus_session'])
+            else:
+                gus = BacklogClient()
             buildid = gus.find_build_id(scheduled_build)
             work = gus.find_work(work_name)
             gus.mark_work_fixed(work["Id"], buildid)

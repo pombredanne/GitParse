@@ -8,3 +8,4 @@ v0.1.6, 22 July 2013 -- Fixed bug with annotations
 v0.1.7, 22 July 2013 -- Added remote method to PostCommit
 v0.1.10, 23 July 2013 -- Fixed remote method and cleaned up output
 v0.1.11, 24 July 2013 -- Added ability to load existing comment value
+v0.1.12, 24 July 2013 -- Fixed session rehydration for remote posting
