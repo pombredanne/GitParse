@@ -91,28 +91,30 @@ class PostCommit:
         Updates the gus item to fixed as long as there is a 'fixes' and 'scheduled_build'
         annotation in the commit message
         '''        
-        try:
+        if 'scheduled_build' in commit['annotations'] and 'fixes' in commit['annotations']:
             scheduled_build = commit['annotations']['scheduled_build']
             work_name = commit['annotations']['fixes']
-            if 'gus_session' in commit:
-                gus = BacklogClient(session_id=commit['gus_session'])
-            else:
-                gus = BacklogClient()
-            buildid = gus.find_build_id(scheduled_build)
-            work = gus.find_work(work_name)
-            gus.mark_work_fixed(work["Id"], buildid)
-            gus.add_changelist_comment(work["Id"], "%s\n\n%s" % (commit['title'], commit['overview']), commit['changelist'])
-            print 'Updated Work Item %s (%s) status to Fixed in build %s' % (work_name, work['Id'], scheduled_build)
-        except Exception as e:
-            print 'Seems to be missing Gus ID/Build or unable to reach Gus. Not updating Gus'
-            print e
+            try:
+                if 'gus_session' in commit:
+                    gus = BacklogClient(session_id=commit['gus_session'])
+                else:
+                    gus = BacklogClient()
+                buildid = gus.find_build_id(scheduled_build)
+                work = gus.find_work(work_name)
+                gus.mark_work_fixed(work["Id"], buildid)
+                gus.add_changelist_comment(work["Id"], "%s\n\n%s" % (commit['title'], commit['overview']), commit['changelist'])
+                print 'Updated Work Item %s (%s) status to Fixed in build %s' % (work_name, work['Id'], scheduled_build)
+            except Exception as e:
+                print 'Unable to update Gus: %s' % str(e)
+        else:
+            print 'No Gus annotations (scheduled_build, fixed), not updating Gus'
     
     def collab(self, commit, author=None):
         '''
         Creates a code review in code collaborator from the git logs if there is
         a 'reviewers' annotation in the commit message
         '''
-        try:
+        if 'reviewers' in commit['annotations']:
             reviewers = commit['annotations']['reviewers']
             cc = CodeCollabClient()
             review_id = cc.create_collab(commit['title'], commit['overview'])
@@ -122,9 +124,8 @@ class PostCommit:
             cc.add_reviewers(review_id, author, reviewers)
             cc.done(review_id)
             print 'Created code review %s for author %s' % (review_id, author)
-        except Exception as e:
-            print 'No reviewer specified for commit, can\'t create review'
-            print e
+        else:
+            print 'No reviewers specified for commit, can\'t create review'
         
     def commit(self):
         '''
