@@ -1,3 +1,4 @@
+
 Post Commit hook utility
 ========================
 
@@ -11,7 +12,7 @@ of your repository and make executable
 
 	#!/usr/bin/env python
 	
-	from git.Git import PostCommit
+	from git.PostCommit import PostCommit
 	
 	pc = PostCommit()
 	pc.commit()
@@ -20,7 +21,7 @@ You can also utilize a the webservice to do the updates asynchronously
 
 	#!/usr/bin/env python
 	
-	from git.Git import PostCommit
+	from git.PostCommit import PostCommit
 	
 	pc = PostCommit()
 	pc.remote()
