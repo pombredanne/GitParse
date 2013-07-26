@@ -1,4 +1,3 @@
-=====
 Post Commit hook utility
 ========================
 
