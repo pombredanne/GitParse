@@ -1,6 +1,6 @@
 import unittest
 from ..Git import Comment
-from ..Git import PostCommit
+from ..PostCommit import PostCommit
 
 class Test(unittest.TestCase):
 
