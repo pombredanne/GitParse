@@ -1,7 +1,25 @@
 from jenkinsapi.jenkins import Jenkins
-import re
+from gus.GusSession import GusSession
+import re, httplib, base64, sys, getpass
 
 class MrHat:
+    def __init__(self):
+        session = MrHatSession()
+        counter = 0
+        self.jenkins = None
+        while self.jenkins is None and counter < 3:
+            try:
+                user = session.load_jenkins_user()
+                token = session.load_jenkins_token()
+                self.jenkins = Jenkins('http://mrhat.internal.radian6.com/jenkins', user, token)
+            except:
+                sys.stdin = open('/dev/tty')
+                print "Not Logged into Jenkins Yet..."
+                user = raw_input("Please enter your Jenkins username: ")
+                passwd = getpass.getpass("Please enter your Jenkins password: ")
+                token = session.login(user, passwd)
+                counter = counter + 1
+            
     def get_next_maint_build(self):
         return self.get_next_build(branch='maint')
     
@@ -12,8 +30,7 @@ class MrHat:
         return self.get_next_build(branch='release')
     
     def get_next_build(self, branch='head'):
-        jenkins = Jenkins('http://mrhat.internal.radian6.com/jenkins', 'scrosby', 'Ih@techangingpassw0rds')
-        job = jenkins['%s-zBuild' % branch]
+        job = self.jenkins['%s-zBuild' % branch]
         build = job.get_last_good_build()
         console = build.get_console()
         release=self.__find_value__("-DreleaseVersion=([^\s]*)", console)
@@ -52,4 +69,36 @@ class MrHat:
         out = match.group(1)
         
         return out
+    
+class MrHatSession(GusSession):
+    def login(self, username, password):
+        try:
+            conn = httplib.HTTPConnection ('mrhat.internal.radian6.com')
+            auth = base64.encodestring('%s:%s' % (username, password)).replace('\n','')
+            headers = {
+                'User-Agent'      : 'gus-client',
+                'Accept'          : 'text/html',
+                'Accept-Encoding' : 'none',
+                'Accept-Charset'  : 'utf-8',
+                'Connection'      : 'close',
+                'Authorization'   : 'Basic %s' % auth,
+                }
+            conn.request('GET', '/jenkins/user/%s/configure' % username, '', headers)
+            response = conn.getresponse()
+            data = response.read()
+            conn.close()
+            regex = re.compile("_.apiToken\" value=\"([^\"]*)", re.MULTILINE)
+            match = regex.search(data)
+            token = match.group(1)
+            self.store(jenkinsuser=username, jenkinstoken=token)
+        except:
+            token = None
+            
+        return token
 
+    def load_jenkins_token(self):
+        return self.__get_local__('jenkins_token')
+    
+    def load_jenkins_user(self):
+        return self.__get_local__('jenkins_user')
+        
