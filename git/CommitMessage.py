@@ -1,5 +1,6 @@
 from .Git import Comment
 from gus.BacklogClient import BacklogClient
+from gus.Gus import NoRecordException
 from ci.jenkins import MrHat
 import sys
 
@@ -28,7 +29,8 @@ class CommitMessage:
         messages = []
         comment = Comment(comment=message)
         for validator in self.validators:
-            messages.append(validator.validate(comment))
+            for message in validator.validate(comment):
+                messages.append(message)
             
         for message in messages:
             print message
@@ -39,7 +41,7 @@ class CommitMessage:
 class BuildValidator:
     def validate(self, comment):
         messages = []
-        annotations = comment['annotations']
+        annotations = comment.annotations()
         build_id = None
         
         if 'scheduled_build' in annotations:
@@ -51,9 +53,9 @@ class BuildValidator:
         if build_id is not None:
             try:
                 gus = BacklogClient()
-                build = gus.find_build_id(build_id)
-                if build is None:
-                    messages.append("Build label %s is not valid.  Please use a valid build label." % build_id)
+                gus.find_build_id(build_id)
+            except NoRecordException:
+                messages.append("Build label %s is not valid.  Please use a valid build label." % build_id)
             except:
                 messages.append("Unable to connect to Gus to validate build. Connect to vpn before committing")
             
@@ -62,16 +64,18 @@ class BuildValidator:
 class InProgressValidator:
     def validate(self, comment):
         messages = []
-        annotations = comment['annotations']
+        annotations = comment.annotations()
         if 'fixes' in annotations:
             gus_id = annotations['fixes']
             try:
                 gus = BacklogClient()
                 work = gus.find_work(gus_id)
-                status = work['Status']
+                status = work['Status__c']
                 
                 if status != 'In Progress':
-                    messages.append("Work %s status is not In Progress, please update GUS before committing" % annotations['fixes'])
+                    messages.append("Work %s status is not In Progress, please update GUS before committing" % gus_id)
+            except NoRecordException:
+                messages.append("Invalid GUS id: %s.  Please use a valid W# in Gus" % gus_id)
             except:
                 messages.append("Can't connect to GUS to check work status.  Connect to vpn before committing.")
                 
