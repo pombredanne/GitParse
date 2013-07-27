@@ -29,7 +29,8 @@ class CommitMessage:
         messages = []
         comment = Comment(comment=message)
         for validator in self.validators:
-            for message in validator.validate(comment):
+            vmessages = validator.validate(comment)
+            for message in vmessages:
                 messages.append(message)
             
         for message in messages:
@@ -55,7 +56,7 @@ class BuildValidator:
                 gus = BacklogClient()
                 gus.find_build_id(build_id)
             except NoRecordException:
-                messages.append("Build label %s is not valid.  Please use a valid build label." % build_id)
+                messages.append("Build label %s is not valid.  Please specify a valid build label with either @scheduled_build or @next." % build_id)
             except:
                 messages.append("Unable to connect to Gus to validate build. Connect to vpn before committing")
             
@@ -79,7 +80,7 @@ class InProgressValidator:
             except:
                 messages.append("Can't connect to GUS to check work status.  Connect to vpn before committing.")
                 
-            return messages
+        return messages
     
 class GusValidator:
     def validate(self, comment):
@@ -88,7 +89,7 @@ class GusValidator:
         
         if 'fixes' in annotations:
             if 'scheduled_build' not in annotations:
-                messages.append("You must specify a valid build label for this fix")
+                messages.append("You must specify a valid build label for this fix using @scheduled_build or @next")
         else:
             messages.append("All commits should include a GUS work id.  Please annotation your commit with an In Progress GUS id using @fixes")
         
