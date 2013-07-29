@@ -1,6 +1,10 @@
 import subprocess, re
 
 class Author:
+    '''
+    Finds the committer name and email from the log for the specified commit.  Assumes last commit
+    unless specified
+    '''
     a_name = ''
     a_email = ''
 
@@ -15,6 +19,10 @@ class Author:
         return self.a_email
 
 class Comment:
+    '''
+    Processes the commit message in a specified commit.  The subject() is the first line of the commit
+    and body() is the remaining lines.  Annotations are returned as a map.
+    '''
     title = ''
     overview = ''
 
@@ -29,12 +37,21 @@ class Comment:
         self.title, self.overview = commit_array[0], "\n".join(commit_array[1:])
 
     def subject(self):
+        '''
+        First line of the commit message
+        '''
         return self.title
 
     def body(self):
+        '''
+        Second and subsequent lines of the commit message
+        '''
         return self.overview
     
     def annotations(self):
+        '''
+        Map of annotations found in the commit message in the format '@key value'
+        '''
         out = {}
         regex = re.compile("@([^\s]*) ([^\s]*)",re.MULTILINE)
         
@@ -46,6 +63,9 @@ class Comment:
         return out
 
 class Changes:
+    '''
+    Outputs changed files in a given commit.  Assumes last commit unless specified
+    '''
     def list(self, commitid='-1'):
         changelist = subprocess.check_output(['git', 'log', commitid, '--name-status', '--pretty=format:%cd'])
         changelist = changelist.replace('\t',': ')
@@ -55,6 +75,9 @@ class Changes:
         return changeout
 
 class Patch:
+    '''
+    Creates a unified diff of the last commit
+    '''
     def diff(self, commitid='-1'):
         diff = subprocess.check_output(['git','log',commitid,'--unified=100000','--pretty=format:%cd'])
         diff_array = diff.split("\n")

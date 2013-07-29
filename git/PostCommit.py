@@ -5,6 +5,26 @@ from ci.jenkins import MrHat
 import httplib, json
 
 class PostCommit:
+    '''
+    Processing helper for post commit in Git.  Call by implementing a new .git/hooks/post-commit
+    and using:
+    
+        #!/usr/bin/env python
+        from git.PostCommit import PostCommit
+        pc = PostCommit()
+        pc.commit()
+        
+    To utilize a web service for async processing, make your post-commit look like:
+    
+        #!/usr/bin/env python
+        from git.PostCommit import PostCommit
+        pc = PostCommit()
+        pc.remote()
+        
+    The default service is localhost:8000, if you want to process on a remote service call
+    
+        pc.remote(server='remoteserver.com:8000')
+    '''
     def buildCommit(self):
         '''
         Parses the last git commit log entry and creates a data structure with the relevant parts 
@@ -39,11 +59,9 @@ class PostCommit:
                 scheduled_build = commit['annotations']['scheduled_build']
                 
             work_name = commit['annotations']['fixes']
+            
             try:
-                if 'gus_session' in commit:
-                    gus = BacklogClient(session_id=commit['gus_session'])
-                else:
-                    gus = BacklogClient()
+                gus = self.__gus_session__(commit)
                 buildid = gus.find_build_id(scheduled_build)
                 work = gus.find_work(work_name)
                 gus.mark_work_fixed(work["Id"], buildid)
@@ -51,8 +69,25 @@ class PostCommit:
                 print 'Updated Work Item %s (%s) status to Fixed in build %s' % (work_name, work['Id'], scheduled_build)
             except Exception as e:
                 print 'Unable to update Gus: %s' % str(e)
+        elif 'updates' in commit['annotations']:
+            work_name = commit['annotations']['updates']
+            try:
+                gus = self.__gus_session__(commit)
+                work = gus.find_work(work_name)
+                gus.mark_work_in_progress(work["Id"])
+                gus.add_changelist_comment(work["Id"], "%s\n\n%s" % (commit['title'], commit['overview']), commit['changelist'])
+                print 'Updated Work Item %s (%s) status to In Progress' % (work_name, work['Id'], scheduled_build)
+            except Exception as e:
+                print 'Unable to update Gus: %s' % str(e)
         else:
             print 'No Gus annotations (scheduled_build, fixed), not updating Gus'
+            
+    def __gus_session__(self, commit):
+        if 'gus_session' in commit:
+            gus = BacklogClient(session_id=commit['gus_session'])
+        else:
+            gus = BacklogClient()
+        return gus
     
     def collab(self, commit, author=None):
         '''
@@ -92,9 +127,13 @@ class PostCommit:
         session_id = gus.session_id()
         cc = CodeCollabClient()
         author = cc.get_current_user()
+        mrhat = MrHat()
+        creds = mrhat.get_current_creds()
         commit = self.buildCommit()
         commit['gus_session'] = session_id
         commit['collab_user'] = author
+        commit['jenkins_user'] = creds[0]
+        commit['jenkins_token'] = creds[1]
         
         conn = httplib.HTTPConnection(server)
         head = {

@@ -10,16 +10,38 @@ class CommitMessage:
     
         #!/usr/bin/env python
         import sys
-        from git.Git import CommitMessage
+        from git.CommitMessage import CommitMessage
         cm = CommitMessage()
         cm.validate(sys.argv[1])
         
+    If you want to cherry pick your validators do the following:
+    
+        #!/usr/bin/env python
+        import sys
+        from git.CommitMessage import CommitMessage
+        cm = CommitMessage(auto=False)
+        cm.do_gus_check()
+        cm.do_in_progress_check()
+        cm.do_build_check()
+        cm.validate(sys.argv[1])
+        
     '''
-    def __init__(self):
+    def __init__(self, auto=True):
         self.validators = []
+        
+        if auto:
+            self.validators.append(GusValidator())
+            self.validators.append(InProgressValidator())
+            self.validators.append(BuildValidator())
+            
+    def do_gus_check(self):
         self.validators.append(GusValidator())
-        self.validators.append(InProgressValidator())
+    
+    def do_build_check(self):
         self.validators.append(BuildValidator())
+           
+    def do_in_progress_check(self):
+        self.validators.append(InProgressValidator())
 
     def validate(self, msg_file):
         with open(msg_file) as f:
@@ -40,6 +62,9 @@ class CommitMessage:
             sys.exit(1)
 
 class BuildValidator:
+    '''
+    Ensures that the message contains a valid @scheduled_build or @next
+    '''
     def validate(self, comment):
         messages = []
         annotations = comment.annotations()
@@ -63,6 +88,10 @@ class BuildValidator:
         return messages
         
 class InProgressValidator:
+    '''
+    Ensures that id's specified by the @fixes annotation represent work that is 
+    currently 'In Progress'
+    '''
     def validate(self, comment):
         messages = []
         annotations = comment.annotations()
@@ -83,15 +112,19 @@ class InProgressValidator:
         return messages
     
 class GusValidator:
+    '''
+    Ensures that the commit message contains a @fixes and either @scheduled_build or @next
+    value.
+    '''
     def validate(self, comment):
         messages = []
         annotations = comment.annotations()
         
         if 'fixes' in annotations:
-            if 'scheduled_build' not in annotations:
+            if 'scheduled_build' not in annotations and 'next' not in annotations:
                 messages.append("You must specify a valid build label for this fix using @scheduled_build or @next")
-        else:
-            messages.append("All commits should include a GUS work id.  Please annotation your commit with an In Progress GUS id using @fixes")
+        elif 'updates' not in annotations:
+            messages.append("All commits should include a GUS work id.  Please annotation your commit with an In Progress GUS id using @fixes or @updates")
         
         return messages
 

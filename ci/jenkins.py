@@ -3,6 +3,9 @@ from gus.GusSession import GusSession
 import re, httplib, base64, sys, getpass
 
 class MrHat:
+    '''
+    Interaction with the build server on MrHat to find build numbers, etc
+    '''
     def __init__(self):
         session = MrHatSession()
         counter = 0
@@ -12,24 +15,37 @@ class MrHat:
                 user = session.load_jenkins_user()
                 token = session.load_jenkins_token()
                 self.jenkins = Jenkins('http://mrhat.internal.radian6.com/jenkins', user, token)
+                self.creds = (user, token)
             except:
                 sys.stdin = open('/dev/tty')
-                print "Not Logged into Jenkins Yet..."
+                print "Not Logged into Jenkins..."
                 user = raw_input("Please enter your Jenkins username: ")
                 passwd = getpass.getpass("Please enter your Jenkins password: ")
                 token = session.login(user, passwd)
                 counter = counter + 1
             
     def get_next_maint_build(self):
+        '''
+        The next build for the current maint branch
+        '''
         return self.get_next_build(branch='maint')
     
     def get_next_head_build(self):
+        '''
+        The next build for HEAD
+        '''
         return self.get_next_build(branch='head')
     
     def get_next_release_build(self):
+        '''
+        The next build for the current release branch
+        '''
         return self.get_next_build(branch='release')
     
     def get_next_build(self, branch='head'):
+        '''
+        Returns the next build for a specified branch
+        '''
         job = self.jenkins['%s-zBuild' % branch]
         build = job.get_last_good_build()
         console = build.get_console()
@@ -41,6 +57,11 @@ class MrHat:
         return out
     
     def find_next_build(self, value):
+        '''
+        Returns the next build for a specified version or assumes the first build
+        of an unstarted version
+        :Param:value=head,release,maint or a release number
+        '''
         if value in ['maint','release','head']:
             build = self.get_next_build(branch=value)
         else:
@@ -49,6 +70,10 @@ class MrHat:
         return build
     
     def get_next_build_for_version(self, version):
+        '''
+        Compares a supplied version number with what is in head, release and maint
+        and returns what is found, otherwise it generates a new build version
+        '''
         for i in 'head', 'release', 'maint':
             out = self.get_next_build(branch=i)
             if out.count(version) > 0:
@@ -56,6 +81,9 @@ class MrHat:
         return "MC_%s-001" % version
     
     def __increment__(self, build_num):
+        '''
+        Increments the build number and returns a new zero filled build number
+        '''
         if str(build_num).startswith('SP'):
             out = 'SP'
         else:
@@ -70,13 +98,23 @@ class MrHat:
         
         return out
     
+    def get_current_creds(self):
+        '''
+        Returns the current creds for MrHat
+        '''
+        return self.creds
+    
 class MrHatSession(GusSession):
     def login(self, username, password):
+        '''
+        Logs into MrHat with a provided username and password and generates a token
+        that can be used for subsequent logins.  Persists the token locally.
+        '''
         try:
             conn = httplib.HTTPConnection ('mrhat.internal.radian6.com')
             auth = base64.encodestring('%s:%s' % (username, password)).replace('\n','')
             headers = {
-                'User-Agent'      : 'gus-client',
+                'User-Agent'      : 'mrhat-client',
                 'Accept'          : 'text/html',
                 'Accept-Encoding' : 'none',
                 'Accept-Charset'  : 'utf-8',
@@ -97,8 +135,14 @@ class MrHatSession(GusSession):
         return token
 
     def load_jenkins_token(self):
+        '''
+        Loads the persisted jenkins token
+        '''
         return self.__get_local__('jenkins_token')
     
     def load_jenkins_user(self):
+        '''
+        Loads the persisted jenkins username
+        '''
         return self.__get_local__('jenkins_user')
         
