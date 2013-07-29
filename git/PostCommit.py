@@ -76,7 +76,7 @@ class PostCommit:
                 work = gus.find_work(work_name)
                 gus.mark_work_in_progress(work["Id"])
                 gus.add_changelist_comment(work["Id"], "%s\n\n%s" % (commit['title'], commit['overview']), commit['changelist'])
-                print 'Updated Work Item %s (%s) status to In Progress' % (work_name, work['Id'], scheduled_build)
+                print 'Updated Work Item %s (%s) status to In Progress' % (work_name, work['Id'])
             except Exception as e:
                 print 'Unable to update Gus: %s' % str(e)
         else:
