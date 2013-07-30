@@ -4,7 +4,7 @@ Created on Jul 26, 2013
 @author: scrosby
 '''
 import unittest
-from ..CommitMessage import BuildValidator, CommitMessage, GusValidator, InProgressValidator
+from ..CommitMessage import BuildValidator
 from ..Git import Comment
 
 

@@ -5,7 +5,7 @@ from ci.jenkins import MrHat
 import sys
 
 class CommitMessage:
-    '''
+    """
     Use this from a the commit-msg git commit hook by calling the validate method
     
         #!/usr/bin/env python
@@ -25,7 +25,7 @@ class CommitMessage:
         cm.do_build_check()
         cm.validate(sys.argv[1])
         
-    '''
+    """
     def __init__(self, auto=True):
         self.validators = []
         
@@ -35,15 +35,27 @@ class CommitMessage:
             self.validators.append(BuildValidator())
             
     def do_gus_check(self):
+        '''
+        Enables Gus Annotation validation.
+        '''
         self.validators.append(GusValidator())
     
     def do_build_check(self):
+        '''
+        Enables Build label validation.
+        '''
         self.validators.append(BuildValidator())
            
     def do_in_progress_check(self):
+        '''
+        Enables Work In Progress validation
+        '''
         self.validators.append(InProgressValidator())
 
     def validate(self, msg_file):
+        '''
+        Validates a file containing a commit message
+        '''
         with open(msg_file) as f:
             message = f.read()
             f.close()

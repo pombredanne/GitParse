@@ -46,12 +46,13 @@ class PostCommit:
         
         return commit
     
+
     def gus(self, commit):
         '''
         Updates the gus item to fixed as long as there is a 'fixes' and 'scheduled_build'
         annotation in the commit message
         '''        
-        if ('scheduled_build' in commit['annotations'] or 'next' in commit['annotations']) and 'fixes' in commit['annotations']:
+        if self.__is_valid_fix__(commit):
             if 'next' in commit['annotations']:
                 mrhat = MrHat()
                 scheduled_build = mrhat.find_next_build(commit['annotations']['next'])
@@ -82,6 +83,12 @@ class PostCommit:
         else:
             print 'No Gus annotations (scheduled_build, fixed), not updating Gus'
             
+    def __is_valid_fix__(self, commit):
+        if 'fixes' in commit['annotations']:
+            return 'scheduled_build' in commit['annotations'] or 'next' in commit['annotations']
+        else:
+            return False
+
     def __gus_session__(self, commit):
         if 'gus_session' in commit:
             gus = BacklogClient(session_id=commit['gus_session'])
