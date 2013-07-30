@@ -1,0 +1,7 @@
+#!/usr/bin/env python
+
+from git.CommitMessage import CommitMessage
+import sys
+
+cm = CommitMessage()
+cm.validate(sys.argv[1])
