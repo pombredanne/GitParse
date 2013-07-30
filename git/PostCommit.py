@@ -81,7 +81,7 @@ class PostCommit:
             except Exception as e:
                 print 'Unable to update Gus: %s' % str(e)
         else:
-            print 'No Gus annotations (scheduled_build, fixed), not updating Gus'
+            print 'No Gus annotations (fixes with scheduled_build or next, updates), not updating Gus'
             
     def __is_valid_fix__(self, commit):
         if 'fixes' in commit['annotations']:
