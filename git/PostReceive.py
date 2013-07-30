@@ -1,5 +1,8 @@
 
 class PostReceive:
+    '''
+    Processes webhooks from GitHub
+    '''
     def process(self, json_data):
         commits = json_data['commits']
         for commit in commits:
