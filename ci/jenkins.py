@@ -112,7 +112,8 @@ class MrHatSession(GusSession):
         '''
         try:
             conn = httplib.HTTPConnection ('mrhat.internal.radian6.com')
-            auth = base64.encodestring('%s:%s' % (username, password)).replace('\n','')
+            password = password.replace('\n', '')
+            auth = base64.encodestring('%s:%s' % (username, password))
             headers = {
                 'User-Agent'      : 'mrhat-client',
                 'Accept'          : 'text/html',

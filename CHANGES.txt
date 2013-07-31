@@ -14,3 +14,4 @@ v0.1.14, 25 July 2013 -- Added next annotation
 v0.1.15, 27 July 2013 -- Added CommitMessage validation for commit-msg hook
 v0.1.16, 30 July 2013 -- Added 'updates' annotation which marks bugs in progress and adds change list and comments to a bug
 v0.1.17, 30 July 2013 -- Added install scripts
+v0.1.18, 31 July 2013 -- Fixed issue with Jenkins Login, updated gus_client dependency version
