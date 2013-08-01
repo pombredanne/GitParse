@@ -51,8 +51,8 @@ class MrHat:
         console = build.get_console()
         release=self.__find_value__("-DreleaseVersion=([^\s]*)", console)
         build=self.__find_value__("-DbuildVersion=([^\s]*)", console)
-        b, n = build.split('_')
-        out="MC_%s-%s" % (str(release).replace('-', '.'), self.__increment__(b))
+        b = build.split('_')
+        out="MC_%s-%s" % (str(release).replace('-', '.'), self.__increment__(b[0]))
         
         return out
     
