@@ -110,9 +110,31 @@ class PostCommit:
                 author = cc.get_current_user()
             cc.add_reviewers(review_id, author, reviewers)
             cc.done(review_id)
+            
+            work_name = self.get_work_name(commit)
+            if work_name is not None:
+                gus = BacklogClient()
+                work = gus.find_work(work_name)
+                gus.add_comment(work['Id'], 'Code Review Created: %s' % cc.get_review_link(review_id))
+                
             print 'Created code review %s for author %s' % (review_id, author)
+        elif 'update_review' in commit['annotations']:
+            review_id = commit['annotations']['update_review']
+            cc = CodeCollabClient()
+            cc.add_diffs(review_id, commit['unified_diff'], comment='Updated Files from Commit')
+            print 'Updated review %s with changes from commit' % review_id
         else:
-            print 'No reviewers specified for commit, can\'t create review'
+            print 'No reviewers specified for commit, can\'t create review.  Use @reviewers or @update_review'
+        
+    def get_work_name(self, commit):
+        if 'fixes' in commit['annotations']:
+            work_name = commit['annotations']['fixes']
+        elif 'updates' in commit['annotations']:
+            work_name = commit['annotations']['updates']
+        else:
+            work_name = None
+            
+        return work_name
         
     def commit(self):
         '''

@@ -1,6 +1,7 @@
 from .Git import Comment
 from gus.BacklogClient import BacklogClient
 from gus.Gus import NoRecordException
+from collab.CodeCollab import CodeCollabClient
 from ci.jenkins import MrHat
 import sys
 
@@ -30,9 +31,10 @@ class CommitMessage:
         self.validators = []
         
         if auto:
-            self.validators.append(GusValidator())
-            self.validators.append(InProgressValidator())
-            self.validators.append(BuildValidator())
+            self.do_gus_check()
+            self.do_in_progress_check()
+            self.do_build_check()
+            self.do_review_check()
             
     def do_gus_check(self):
         '''
@@ -51,6 +53,12 @@ class CommitMessage:
         Enables Work In Progress validation
         '''
         self.validators.append(InProgressValidator())
+        
+    def do_review_check(self):
+        '''
+        Enables update review validation
+        '''
+        self.validators.append(ReviewValidator())
 
     def validate(self, msg_file):
         '''
@@ -139,4 +147,24 @@ class GusValidator:
             messages.append("All commits should include a GUS work id.  Please annotation your commit with an In Progress GUS id using @fixes or @updates")
         
         return messages
+    
+class ReviewValidator:
+    '''
+    Ensures that any update_review annotations are referencing valid reviews
+    '''
+    def validate(self, comment):
+        messages = []
+        annotations = comment.annotations()
+        
+        if 'update_review' in annotations:
+            cc = CodeCollabClient()
+            user = cc.get_current_user()
+            author = cc.get_review_author(annotations['update_review'])
+            if user != author:
+                messages.append("You are not the author of review %s.  Please ensure you have the correct review id for @update_review." % annotations['update_review'])
+                
+            status = cc.get_review_status(annotations['update_review'])
+            if status == 'Completed':
+                messages.append("The review specified (%s) is already Complete.  Create a new review with @reviewers" % annotations['update_review'])
 
+        return messages
