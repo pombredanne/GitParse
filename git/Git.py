@@ -5,9 +5,6 @@ class Author:
     Finds the committer name and email from the log for the specified commit.  Assumes last commit
     unless specified
     '''
-    a_name = ''
-    a_email = ''
-
     def __init__(self, commitid='-1'):
         author = subprocess.check_output(['git','log',commitid,'--pretty=format:%cn,%ce'])
         self.a_name, self.a_email = author.split(",")
@@ -23,9 +20,6 @@ class Comment:
     Processes the commit message in a specified commit.  The subject() is the first line of the commit
     and body() is the remaining lines.  Annotations are returned as a map.
     '''
-    title = ''
-    overview = ''
-
     def __init__(self, comment=None, commitid='-1'):
         if comment is None:
             out = subprocess.check_output(['git', 'log', commitid, '--pretty=format:%B'])
@@ -85,5 +79,23 @@ class Patch:
         diffout = "\n".join(diff_array[1:])
         return diffout
     
+class Commit:
+    def get_commit_value(self, symbol):
+        command = ['git', 'log', '-1', '--pretty=format:%s' % symbol]
+        out = subprocess.check_output(command)
+        return out
+        
+    def commit_hash(self):
+        return self.get_commit_value('%H')
     
+    def small_commit_hash(self):
+        return self.get_commit_value('%h')
 
+    def tree_hash(self):
+        return self.get_commit_value('%T')
+
+    def small_tree_hash(self):
+        return self.get_commit_value('%t')
+
+    def parent_hash(self):
+        return self.get_commit_value('%P')

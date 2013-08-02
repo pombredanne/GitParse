@@ -122,6 +122,7 @@ class PostCommit:
             review_id = commit['annotations']['update_review']
             cc = CodeCollabClient()
             cc.add_diffs(review_id, commit['unified_diff'], comment='Updated Files from Commit')
+            cc.add_comment(review_id, commit['title'])
             print 'Updated review %s with changes from commit' % review_id
         else:
             print 'No reviewers specified for commit, can\'t create review.  Use @reviewers or @update_review'

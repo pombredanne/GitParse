@@ -35,6 +35,7 @@ class CommitMessage:
             self.do_in_progress_check()
             self.do_build_check()
             self.do_review_check()
+            self.do_valid_review_check()
             
     def do_gus_check(self):
         '''
@@ -59,6 +60,9 @@ class CommitMessage:
         Enables update review validation
         '''
         self.validators.append(ReviewValidator())
+        
+    def do_valid_review_check(self):
+        self.validators.append(ReviewInProgressValidator())
 
     def validate(self, msg_file):
         '''
@@ -147,8 +151,17 @@ class GusValidator:
             messages.append("All commits should include a GUS work id.  Please annotation your commit with an In Progress GUS id using @fixes or @updates")
         
         return messages
-    
+
 class ReviewValidator:
+    def validate(self, comment):
+        messages = []
+        
+        if 'reviewers' not in comment['annotations'] and 'update_review' not in comment['annotations']:
+            messages.append("No review annotations specified.  You need to either create a new review with @reviewers or @update_review with id")
+        
+        return messages
+    
+class ReviewInProgressValidator:
     '''
     Ensures that any update_review annotations are referencing valid reviews
     '''
