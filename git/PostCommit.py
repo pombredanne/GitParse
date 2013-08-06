@@ -105,17 +105,17 @@ class PostCommit:
             reviewers = commit['annotations']['reviewers']
             cc = CodeCollabClient()
             review_id = cc.create_collab(commit['title'], commit['overview'])
-            cc.add_diffs(review_id, commit['unified_diff'])
             if author is None:
                 author = cc.get_current_user()
             cc.add_reviewers(review_id, author, reviewers)
+            cc.add_diffs(review_id, commit['unified_diff'])
             cc.done(review_id)
             
             work_name = self.get_work_name(commit)
             if work_name is not None:
-                gus = BacklogClient()
+                gus = self.__gus_session__(commit)
                 work = gus.find_work(work_name)
-                gus.add_comment(work['Id'], 'Code Review Created: %s' % cc.get_review_link(review_id))
+                gus.add_collab_link(work, cc.get_review_link(review_id))
                 
             print 'Created code review %s for author %s' % (review_id, author)
         elif 'update_review' in commit['annotations']:
