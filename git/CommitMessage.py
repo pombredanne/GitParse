@@ -121,8 +121,8 @@ class InProgressValidator:
         annotations = comment.annotations()
         if 'fixes' in annotations:
             gus_id = annotations['fixes']
+            gus = BacklogClient()
             try:
-                gus = BacklogClient()
                 work = gus.find_work(gus_id)
                 status = work['Status__c']
                 
@@ -130,11 +130,28 @@ class InProgressValidator:
                     messages.append("Work %s status is not In Progress, please update GUS before committing" % gus_id)
             except NoRecordException:
                 messages.append("Invalid GUS id: %s.  Please use a valid W# in Gus" % gus_id)
+                GusHelper().show_potential_work(messages)
             except:
                 messages.append("Can't connect to GUS to check work status.  Connect to vpn before committing.")
                 
         return messages
-    
+
+class GusHelper:
+    def show_potential_work(self, messages):
+        gus = BacklogClient()
+        userid = gus.get_current_user_id()
+        current_work = gus.get_open_work_for_user_id(userid)
+        tasked_work = gus.get_work_with_active_tasks_for_user(userid)
+        for w in tasked_work:
+            current_work.append(w)
+
+        if len(current_work) > 0:
+            messages.append("Perhaps one of these:")
+            for work in current_work:
+                s = "\t%s (%s): %s" % (work[0], work[1], work[2])
+                if s not in messages:
+                    messages.append(s)    
+                    
 class GusValidator:
     '''
     Ensures that the commit message contains a @fixes and either @scheduled_build or @next
@@ -149,6 +166,7 @@ class GusValidator:
                 messages.append("You must specify a valid build label for this fix using @scheduled_build or @next")
         elif 'updates' not in annotations:
             messages.append("All commits should include a GUS work id.  Please annotation your commit with an In Progress GUS id using @fixes or @updates")
+            GusHelper().show_potential_work(messages)
         
         return messages
 
@@ -156,7 +174,7 @@ class ReviewValidator:
     def validate(self, comment):
         messages = []
         
-        if 'reviewers' not in comment['annotations'] and 'update_review' not in comment['annotations']:
+        if 'reviewers' not in comment.annotations() and 'update_review' not in comment.annotations():
             messages.append("No review annotations specified.  You need to either create a new review with @reviewers or @update_review with id")
         
         return messages

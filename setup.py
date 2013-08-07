@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='r6_commit',
-    version='0.1.19',
+    version='0.1.20',
     author='Shawn Crosby',
     author_email='scrosby@salesforce.com',
     packages=find_packages(),
@@ -12,7 +12,7 @@ setup(
     long_description=open('README.txt').read(),
     scripts=['bin/setup_git_hooks.py', 'bin/post-commit', 'bin/commit-msg'],
     install_requires=[
-        "gus_client>=0.1.9",
+        "gus_client>=0.1.10",
         "ccollab_client>=0.1.5",
         "jenkinsapi",
     ],
