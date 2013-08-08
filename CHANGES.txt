@@ -17,3 +17,4 @@ v0.1.17, 30 July 2013 -- Added install scripts
 v0.1.18, 31 July 2013 -- Fixed issue with Jenkins Login, updated gus_client dependency version
 v0.1.19,  2 Aug	 2013 -- Process a new update_review annotation and validate
 v0.1.20,  7 Aug	 2013 -- Added functionality to display active and assigned work during pre-commit failure as helper
+v0.1.21,  8 Aug  2013 -- Refactor Jenkins to use common login dialog and common local storage

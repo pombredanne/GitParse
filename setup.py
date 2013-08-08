@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='r6_commit',
-    version='0.1.20',
+    version='0.1.21',
     author='Shawn Crosby',
     author_email='scrosby@salesforce.com',
     packages=find_packages(),
@@ -15,6 +15,6 @@ setup(
         "gus_client>=0.1.10",
         "ccollab_client>=0.1.5",
         "jenkinsapi",
-        "sc_pylibs",
+        "sc_pylibs>=0.1.1",
     ],
 )
