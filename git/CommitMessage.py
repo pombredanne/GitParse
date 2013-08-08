@@ -140,11 +140,8 @@ class GusHelper:
     def show_potential_work(self, messages):
         gus = BacklogClient()
         userid = gus.get_current_user_id()
-        current_work = gus.get_open_work_for_user_id(userid)
-        tasked_work = gus.get_work_with_active_tasks_for_user(userid)
-        for w in tasked_work:
-            current_work.append(w)
-
+        current_work = gus.get_potential_work_for_user(userid)
+        
         if len(current_work) > 0:
             messages.append("Perhaps one of these:")
             for work in current_work:
@@ -165,7 +162,7 @@ class GusValidator:
             if 'scheduled_build' not in annotations and 'next' not in annotations:
                 messages.append("You must specify a valid build label for this fix using @scheduled_build or @next")
         elif 'updates' not in annotations:
-            messages.append("All commits should include a GUS work id.  Please annotation your commit with an In Progress GUS id using @fixes or @updates")
+            messages.append("All commits should include a GUS work id.  Please annotate your commit with an In Progress GUS id using @fixes or @updates")
             GusHelper().show_potential_work(messages)
         
         return messages
