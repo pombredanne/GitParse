@@ -15,5 +15,6 @@ setup(
         "gus_client>=0.1.10",
         "ccollab_client>=0.1.5",
         "jenkinsapi",
+        "sc_pylibs",
     ],
 )

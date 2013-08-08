@@ -1,13 +1,14 @@
 from jenkinsapi.jenkins import Jenkins
-from gus.GusSession import GusSession
-import re, httplib, base64, sys, getpass
+from .JenkinsSession import JenkinsSession
+from ui.Login import Factory
+import re, sys
 
 class MrHat:
     '''
     Interaction with the build server on MrHat to find build numbers, etc
     '''
     def __init__(self):
-        session = MrHatSession()
+        session = JenkinsSession()
         counter = 0
         self.jenkins = None
         while self.jenkins is None and counter < 3:
@@ -17,10 +18,16 @@ class MrHat:
                 self.jenkins = Jenkins('http://mrhat.internal.radian6.com/jenkins', user, token)
                 self.creds = (user, token)
             except:
-                sys.stdin = open('/dev/tty')
-                print "Not Logged into Jenkins..."
-                user = raw_input("Please enter your Jenkins username: ")
-                passwd = getpass.getpass("Please enter your Jenkins password: ")
+                if sys.stdin.isatty():
+                    login = Factory().get_login('CLI', 'Login to Jenkins...')
+                else:
+                    login = Factory().get_login('GUI', 'Login to Jenkins...')
+                    
+                login.add_prompt('user', 'Jenkins UserName', 'TEXT', session.load_jenkins_user())
+                login.add_prompt('password', 'Jenkins Password', 'PASSWORD')
+                    
+                user = login.get_value('user')
+                passwd = login.get_value('password')
                 token = session.login(user, passwd)
                 counter = counter + 1
             
@@ -104,46 +111,3 @@ class MrHat:
         '''
         return self.creds
     
-class MrHatSession(GusSession):
-    def login(self, username, password):
-        '''
-        Logs into MrHat with a provided username and password and generates a token
-        that can be used for subsequent logins.  Persists the token locally.
-        '''
-        try:
-            conn = httplib.HTTPConnection ('mrhat.internal.radian6.com')
-            password = password.replace('\n', '')
-            auth = base64.encodestring('%s:%s' % (username, password))
-            headers = {
-                'User-Agent'      : 'mrhat-client',
-                'Accept'          : 'text/html',
-                'Accept-Encoding' : 'none',
-                'Accept-Charset'  : 'utf-8',
-                'Connection'      : 'close',
-                'Authorization'   : 'Basic %s' % auth,
-                }
-            conn.request('GET', '/jenkins/user/%s/configure' % username, '', headers)
-            response = conn.getresponse()
-            data = response.read()
-            conn.close()
-            regex = re.compile("_.apiToken\" value=\"([^\"]*)", re.MULTILINE)
-            match = regex.search(data)
-            token = match.group(1)
-            self.store(jenkinsuser=username, jenkinstoken=token)
-        except:
-            token = None
-            
-        return token
-
-    def load_jenkins_token(self):
-        '''
-        Loads the persisted jenkins token
-        '''
-        return self.__get_local__('jenkins_token')
-    
-    def load_jenkins_user(self):
-        '''
-        Loads the persisted jenkins username
-        '''
-        return self.__get_local__('jenkins_user')
-        
