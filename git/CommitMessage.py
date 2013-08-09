@@ -28,13 +28,14 @@ class CommitMessage:
         
     """
     def __init__(self, auto=True):
+        print "Code Collab 6.5 command line is very slow, please wait..."
         self.validators = []
         
         if auto:
             self.do_gus_check()
             self.do_in_progress_check()
             self.do_build_check()
-            self.do_review_check()
+            #self.do_review_check()
             self.do_valid_review_check()
             
     def do_gus_check(self):
